@@ -1,0 +1,14 @@
+{
+  "ios": {
+    "latest": "1.0",
+    "min": "1.0",
+    "url": "",
+    "note": {}
+  },
+  "android": {
+    "latest": "1.0",
+    "min": "1.0",
+    "url": "https://play.google.com/store/apps/details?id=com.hassaniazdine.stelli",
+    "note": {}
+  }
+}
