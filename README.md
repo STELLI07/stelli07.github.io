@@ -2,7 +2,7 @@
 
 Ce petit site sert à trois choses :
 
-- `index.html` : la politique de confidentialité du jeu, en 8 langues (c'est la page demandée par Apple, Google et AdMob).
+- `index.html` : la politique de confidentialité du jeu, en 12 langues (c'est la page demandée par Apple, Google et AdMob).
 - `app-ads.txt` : la ligne demandée par AdMob pour les publicités.
 - `version.json` : le fichier que le jeu lit, quand le joueur est connecté, pour savoir s'il existe une nouvelle version.
 
