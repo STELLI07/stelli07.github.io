@@ -32,6 +32,12 @@
     }
   } catch (e) {}
 
+  const haut = document.querySelector('.haut');
+  if (haut) {
+    const colle = () => haut.classList.toggle('colle', scrollY > 40);
+    addEventListener('scroll', colle, { passive: true }); colle();
+  }
+
   const reveles = document.querySelectorAll('.revele');
   if (doux || !IO) reveles.forEach((el) => el.classList.add('vu'));
   else {
@@ -39,6 +45,21 @@
       for (const en of es) if (en.isIntersecting) { en.target.classList.add('vu'); io.unobserve(en.target); }
     }, { rootMargin: '0px 0px -6% 0px', threshold: 0.12 });
     reveles.forEach((el) => io.observe(el));
+  }
+
+  const vid = document.querySelector('.video video');
+  if (vid) {
+    const eco = navigator.connection && navigator.connection.saveData;
+    if (doux || eco || !IO) vid.controls = true;
+    else new IntersectionObserver((es) => {
+      for (const en of es) {
+        if (en.isIntersecting) {
+          vid.preload = 'auto';
+          const p = vid.play();
+          if (p && p.catch) p.catch(() => { vid.controls = true; });
+        } else vid.pause();
+      }
+    }, { threshold: 0.25 }).observe(vid);
   }
 
   const voyage = document.querySelector('.voyage');
@@ -278,7 +299,7 @@
   const c = document.getElementById('ciel');
   if (!c || !c.getContext) return;
   const x = c.getContext('2d');
-  let W = 0, H = 0, D = 1, points = [], filantes = [], eclats = [], vu = true, prec = 0, marche = false;
+  let W = 0, H = 0, D = 1, points = [], filantes = [], vu = true, prec = 0, marche = false;
   const taille = () => {
     D = Math.min(2, window.devicePixelRatio || 1); W = c.clientWidth; H = c.clientHeight;
     c.width = Math.round(W * D); c.height = Math.round(H * D); x.setTransform(D, 0, 0, D, 0, 0);
@@ -298,8 +319,6 @@
       x.strokeStyle = g; x.lineWidth = s.r * 0.55; x.lineCap = 'round'; x.beginPath(); x.moveTo(s.x, s.y); x.lineTo(tx, ty); x.stroke();
       etoile(s.x, s.y, s.r, s.a);
     }
-    for (const s of eclats) { x.globalAlpha = Math.max(0, Math.min(1, s.vie * 1.6)); etoile(s.x, s.y, s.r, s.a); }
-    x.globalAlpha = 1;
   };
   const tour = (t) => {
     if (!vu) { marche = false; return; }
@@ -310,8 +329,6 @@
     }
     for (const s of filantes) { s.x += s.vx * dt; s.y += s.vy * dt; s.a += s.va * dt; }
     filantes = filantes.filter((s) => s.y < H + 40);
-    for (const s of eclats) { s.x += s.vx * dt; s.y += s.vy * dt; s.vy += 300 * dt; s.vx *= 1 - dt * 1.5; s.a += s.va * dt; s.vie -= dt; }
-    eclats = eclats.filter((s) => s.vie > 0);
     dessine(t);
     requestAnimationFrame(tour);
   };
@@ -319,18 +336,6 @@
   taille();
   addEventListener('resize', () => { taille(); if (doux) dessine(0); });
   if (doux) { dessine(0); return; }
-  const hero = document.querySelector('.hero'), art = document.querySelector('.art');
-  if (hero) hero.addEventListener('pointerdown', (ev) => {
-    if (ev.target.closest('a,select,button,label')) return;
-    const r = c.getBoundingClientRect(), px = ev.clientX - r.left, py = ev.clientY - r.top;
-    for (let i = 0; i < 12; i++) {
-      const a = i / 12 * 6.283 + al(-0.2, 0.2), v = al(110, 240);
-      eclats.push({ x: px, y: py, vx: Math.cos(a) * v, vy: Math.sin(a) * v - 60, r: al(3, 6.5), a: al(0, 6), va: al(-5, 5), vie: al(0.7, 1.1) });
-    }
-    if (eclats.length > 120) eclats.splice(0, eclats.length - 120);
-    if (art && ev.target.closest('.art')) { art.classList.remove('saute'); void art.offsetWidth; art.classList.add('saute'); }
-  });
-  if (art) art.addEventListener('animationend', (ev) => { if (ev.animationName === 'saute') art.classList.remove('saute'); });
   if (IO) new IntersectionObserver((es) => { vu = es[0].isIntersecting; if (vu) demarre(); }).observe(c);
   demarre();
 })();
