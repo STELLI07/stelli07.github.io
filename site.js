@@ -173,21 +173,79 @@
       },
     },
     foret: {
-      init: (W, H) => ({ l: Array.from({ length: combien(W, H, 20000, 36) }, () => ({ x: al(0, W), y: al(0, H), vx: al(-12, 12), vy: al(-12, 12), ph: al(0, 6.3), f: al(1.2, 2.6), s: al(10, 22) })) }),
+      init: (W, H) => ({
+        l: Array.from({ length: combien(W, H, 9500, 64) }, () => {
+          const r = Math.random(), z = r < 0.42 ? 0.45 : r < 0.82 ? 0.72 : 1;
+          return { x: al(0, W), y: al(0, H), z, a: al(0, 6.283), ang: 0, v: al(10, 18) * (0.5 + 0.5 * z), p1: al(0, 6.3), p2: al(0, 6.3),
+            P: al(3.2, 6), c: -al(0, 6), d: Math.random() < 0.25, w: al(0, 6.3), lum: 0, tr: [], tt: 0 };
+        }),
+        f: Array.from({ length: Math.min(6, Math.round(W / 220) + 2) }, () => ({ x: al(0, W), y: al(-H, H), s: al(6, 10), v: al(14, 26),
+          ph: al(0, 6.3), r: al(0, 6.3), vr: al(-1.2, 1.2), c: ['#3f7d45', '#2f6a3c', '#5a9447'][Math.random() * 3 | 0] })),
+        vg: al(2.5, 4),
+      }),
       pas: (E, dt, t, W, H) => {
-        const fr = Math.max(0, 1 - dt * 0.9);
+        E.vg -= dt;
+        if (E.vg <= 0) { E.vg = al(11, 16); for (const l of E.l) l.c = t + (l.x / W) * 2.4 + al(0, 0.25); }
+        const eclat = (v) => v < 0 ? 0 : v < 0.25 ? (v / 0.25) ** 2 : v < 0.9 ? 1 : v < 2 ? (1 - (v - 0.9) / 1.1) ** 1.5 : 0;
         for (const l of E.l) {
-          l.vx = (l.vx + al(-34, 34) * dt) * fr; l.vy = (l.vy + al(-34, 34) * dt) * fr;
-          const m = Math.hypot(l.vx, l.vy); if (m > 24) { l.vx *= 24 / m; l.vy *= 24 / m; }
-          l.x += l.vx * dt; l.y += l.vy * dt;
-          if (l.x < -24) l.x = W + 24; else if (l.x > W + 24) l.x = -24;
-          if (l.y < -24) l.y = H + 24; else if (l.y > H + 24) l.y = -24;
+          let u = t - l.c;
+          if (u >= l.P) { const k = Math.floor(u / l.P); l.c += k * l.P; u -= k * l.P; }
+          const but = u < 0 ? 0 : Math.max(eclat(u), l.d ? 0.85 * eclat(u - 0.62) : 0);
+          l.lum = but >= l.lum ? but : Math.max(but, l.lum - dt * 1.6);
+          l.a += (Math.sin(t * 0.7 + l.p1) * 0.9 + Math.sin(t * 1.9 + l.p2) * 0.5) * dt;
+          const sp = l.v * (0.7 + 0.5 * l.lum), vx = Math.cos(l.a) * sp, vy = Math.sin(l.a) * sp * 0.6 - l.lum * 24 * l.z;
+          l.x += vx * dt; l.y += vy * dt; l.ang = Math.atan2(vy, vx);
+          let saut = false;
+          if (l.x < -40) { l.x = W + 40; saut = true; } else if (l.x > W + 40) { l.x = -40; saut = true; }
+          if (l.y < -40) { l.y = H + 40; saut = true; } else if (l.y > H + 40) { l.y = -40; saut = true; }
+          if (saut) l.tr.length = 0;
+          if (l.z > 0.5) {
+            l.tt += dt;
+            if (l.tt >= 0.04) {
+              l.tt = 0;
+              if (l.lum > 0.04) { l.tr.push(l.x, l.y, l.lum); if (l.tr.length > 75) l.tr.splice(0, 3); } else if (l.tr.length) l.tr.splice(0, 3);
+            }
+          }
         }
+        for (const f of E.f) { f.y += f.v * dt; f.x += Math.sin(t * 1.3 + f.ph) * 14 * dt; f.r += f.vr * dt; if (f.y > H + 20) { f.y = -20; f.x = al(0, W); } }
       },
-      dessin: (x, E, t) => {
-        const g = lueur('214,255,110', 24); x.globalCompositeOperation = 'lighter';
-        for (const l of E.l) { x.globalAlpha = Math.max(0, 0.55 + 0.45 * Math.sin(t * l.f + l.ph)); x.drawImage(g, l.x - l.s, l.y - l.s, l.s * 2, l.s * 2); }
-        x.globalAlpha = 1; x.globalCompositeOperation = 'source-over';
+      dessin: (x, E, t, W, H, x2) => {
+        for (const f of E.f) {
+          x.save(); x.translate(f.x, f.y); x.rotate(f.r); x.scale(Math.sin(t * 2.1 + f.ph), 1); x.globalAlpha = 0.5; x.fillStyle = f.c;
+          x.beginPath(); x.moveTo(0, -f.s); x.quadraticCurveTo(f.s * 0.85, 0, 0, f.s); x.quadraticCurveTo(-f.s * 0.85, 0, 0, -f.s); x.fill();
+          x.restore();
+        }
+        const halo = lueur('214,255,104', 48), coeur = lueur('255,255,222', 8), ciel = lueur('170,255,120', 64);
+        const corps = (g, l, S) => {
+          const k = l.lum, fl = 0.4 + 0.6 * Math.abs(Math.sin(t * 42 + l.w));
+          g.save(); g.translate(l.x, l.y); g.rotate(l.ang); g.scale(S, S);
+          g.globalAlpha = 0.3 + 0.3 * k; g.fillStyle = '#eaffe4';
+          g.beginPath(); g.ellipse(3.7, -2.5 * fl, 4.1, 1.6, -0.55, 0, 6.283); g.fill();
+          g.beginPath(); g.ellipse(3.7, 2.5 * fl, 4.1, 1.6, 0.55, 0, 6.283); g.fill();
+          g.globalAlpha = 0.96;
+          g.fillStyle = '#2a2316'; g.beginPath(); g.ellipse(3.9, 0, 2.9, 1.55, 0, 0, 6.283); g.fill();
+          g.fillStyle = '#e0622f'; g.beginPath(); g.ellipse(6.4, 0, 1.3, 1.2, 0, 0, 6.283); g.fill();
+          g.fillStyle = `rgb(${Math.round(120 + 135 * k)},${Math.round(130 + 125 * k)},${Math.round(56 + 140 * k)})`;
+          g.beginPath(); g.ellipse(0.4, 0, 3, 1.75, 0, 0, 6.283); g.fill();
+          g.restore();
+        };
+        const lumiere = (g, l) => {
+          const tr = l.tr, k = l.z, n = tr.length / 3;
+          for (let i = 0; i < tr.length; i += 3) {
+            const q = (i / 3 + 1) / n, r = 5 * k * (0.45 + 0.55 * q);
+            g.globalAlpha = tr[i + 2] * q * 0.45;
+            g.drawImage(coeur, tr[i] - r, tr[i + 1] - r, r * 2, r * 2);
+          }
+          if (k > 0.5 && k < 1 && l.lum > 0.05) { g.globalAlpha = 0.08 * l.lum; g.drawImage(ciel, l.x - 110, l.y - 110, 220, 220); }
+          const L = (k < 0.5 ? 0.06 : 0.12) + 0.9 * l.lum, hr = (k === 1 ? 36 : k > 0.5 ? 30 : 18) * (0.7 + 0.4 * l.lum), cr = k === 1 ? 7 : k > 0.5 ? 5 : 3;
+          g.globalAlpha = Math.min(1, L * (k < 0.5 ? 0.6 : k === 1 ? 0.85 : 0.95)); g.drawImage(halo, l.x - hr, l.y - hr, hr * 2, hr * 2);
+          g.globalAlpha = Math.min(1, 0.15 + L); g.drawImage(coeur, l.x - cr, l.y - cr, cr * 2, cr * 2);
+        };
+        const av = x2 || x;
+        for (const l of E.l) if (l.z > 0.5) corps(l.z === 1 ? av : x, l, l.z === 1 ? 1.6 : 1.05);
+        x.globalCompositeOperation = 'lighter'; av.globalCompositeOperation = 'lighter';
+        for (const l of E.l) lumiere(l.z === 1 ? av : x, l);
+        x.globalAlpha = 1; x.globalCompositeOperation = 'source-over'; av.globalAlpha = 1; av.globalCompositeOperation = 'source-over';
       },
     },
     sakura: {
@@ -255,8 +313,8 @@
 
   const scenes = [];
   document.querySelectorAll('[data-amb]').forEach((sec) => {
-    const c = sec.querySelector('canvas.amb'), v = VIES[sec.dataset.amb];
-    if (c && c.getContext && v) scenes.push({ sec, c, x: c.getContext('2d'), v, W: 0, H: 0, D: 0, E: null, vis: false });
+    const c = sec.querySelector('canvas.amb:not(.av)'), c2 = sec.querySelector('canvas.amb.av'), v = VIES[sec.dataset.amb];
+    if (c && c.getContext && v) scenes.push({ sec, c, x: c.getContext('2d'), c2, x2: c2 && c2.getContext ? c2.getContext('2d') : null, v, W: 0, H: 0, D: 0, E: null, vis: false });
   });
   const mesure = (s) => {
     const W = s.c.clientWidth, H = s.c.clientHeight;
@@ -265,7 +323,8 @@
     if (W !== s.W || H !== s.H || D !== s.D || !s.E) {
       s.W = W; s.H = H; s.D = D; s.c.width = Math.round(W * D); s.c.height = Math.round(H * D);
       s.x.setTransform(D, 0, 0, D, 0, 0); s.E = s.v.init(W, H);
-      if (doux) s.v.dessin(s.x, s.E, 0, W, H);
+      if (s.x2) { s.c2.width = s.c.width; s.c2.height = s.c.height; s.x2.setTransform(D, 0, 0, D, 0, 0); }
+      if (doux) s.v.dessin(s.x, s.E, 0, W, H, s.x2);
     }
     return true;
   };
@@ -276,7 +335,8 @@
     for (const s of scenes) {
       if (!s.vis || !s.E) continue;
       encore = true;
-      s.x.clearRect(0, 0, s.W, s.H); s.v.pas(s.E, dt, t, s.W, s.H); s.v.dessin(s.x, s.E, t, s.W, s.H);
+      s.x.clearRect(0, 0, s.W, s.H); if (s.x2) s.x2.clearRect(0, 0, s.W, s.H);
+      s.v.pas(s.E, dt, t, s.W, s.H); s.v.dessin(s.x, s.E, t, s.W, s.H, s.x2);
     }
     if (encore && !document.hidden) requestAnimationFrame(boucle); else { tourne = false; avant = 0; }
   };
