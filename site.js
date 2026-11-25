@@ -175,7 +175,7 @@
     foret: {
       init: (W, H) => ({
         l: Array.from({ length: combien(W, H, 9500, 64) }, () => {
-          const r = Math.random(), z = r < 0.42 ? 0.45 : r < 0.82 ? 0.72 : 1;
+          const r = Math.random(), z = r < 0.4 ? 0.45 : r < 0.78 ? 0.72 : 1;
           return { x: al(0, W), y: al(0, H), z, a: al(0, 6.283), ang: 0, v: al(10, 18) * (0.5 + 0.5 * z), p1: al(0, 6.3), p2: al(0, 6.3),
             P: al(3.2, 6), c: -al(0, 6), d: Math.random() < 0.25, w: al(0, 6.3), lum: 0, tr: [], tt: 0 };
         }),
@@ -209,7 +209,7 @@
         }
         for (const f of E.f) { f.y += f.v * dt; f.x += Math.sin(t * 1.3 + f.ph) * 14 * dt; f.r += f.vr * dt; if (f.y > H + 20) { f.y = -20; f.x = al(0, W); } }
       },
-      dessin: (x, E, t, W, H, x2) => {
+      dessin: (x, E, t) => {
         for (const f of E.f) {
           x.save(); x.translate(f.x, f.y); x.rotate(f.r); x.scale(Math.sin(t * 2.1 + f.ph), 1); x.globalAlpha = 0.5; x.fillStyle = f.c;
           x.beginPath(); x.moveTo(0, -f.s); x.quadraticCurveTo(f.s * 0.85, 0, 0, f.s); x.quadraticCurveTo(-f.s * 0.85, 0, 0, -f.s); x.fill();
@@ -236,16 +236,15 @@
             g.globalAlpha = tr[i + 2] * q * 0.45;
             g.drawImage(coeur, tr[i] - r, tr[i + 1] - r, r * 2, r * 2);
           }
-          if (k > 0.5 && k < 1 && l.lum > 0.05) { g.globalAlpha = 0.08 * l.lum; g.drawImage(ciel, l.x - 110, l.y - 110, 220, 220); }
-          const L = (k < 0.5 ? 0.06 : 0.12) + 0.9 * l.lum, hr = (k === 1 ? 36 : k > 0.5 ? 30 : 18) * (0.7 + 0.4 * l.lum), cr = k === 1 ? 7 : k > 0.5 ? 5 : 3;
-          g.globalAlpha = Math.min(1, L * (k < 0.5 ? 0.6 : k === 1 ? 0.85 : 0.95)); g.drawImage(halo, l.x - hr, l.y - hr, hr * 2, hr * 2);
+          if (k > 0.5 && l.lum > 0.05) { const R = k === 1 ? 140 : 110; g.globalAlpha = (k === 1 ? 0.11 : 0.08) * l.lum; g.drawImage(ciel, l.x - R, l.y - R, R * 2, R * 2); }
+          const L = (k < 0.5 ? 0.06 : 0.12) + 0.9 * l.lum, hr = (k === 1 ? 42 : k > 0.5 ? 30 : 18) * (0.7 + 0.4 * l.lum), cr = k === 1 ? 7 : k > 0.5 ? 5 : 3;
+          g.globalAlpha = Math.min(1, L * (k < 0.5 ? 0.6 : 0.95)); g.drawImage(halo, l.x - hr, l.y - hr, hr * 2, hr * 2);
           g.globalAlpha = Math.min(1, 0.15 + L); g.drawImage(coeur, l.x - cr, l.y - cr, cr * 2, cr * 2);
         };
-        const av = x2 || x;
-        for (const l of E.l) if (l.z > 0.5) corps(l.z === 1 ? av : x, l, l.z === 1 ? 1.6 : 1.05);
-        x.globalCompositeOperation = 'lighter'; av.globalCompositeOperation = 'lighter';
-        for (const l of E.l) lumiere(l.z === 1 ? av : x, l);
-        x.globalAlpha = 1; x.globalCompositeOperation = 'source-over'; av.globalAlpha = 1; av.globalCompositeOperation = 'source-over';
+        for (const l of E.l) if (l.z > 0.5) corps(x, l, l.z === 1 ? 1.6 : 1.05);
+        x.globalCompositeOperation = 'lighter';
+        for (const l of E.l) lumiere(x, l);
+        x.globalAlpha = 1; x.globalCompositeOperation = 'source-over';
       },
     },
     sakura: {
@@ -313,8 +312,8 @@
 
   const scenes = [];
   document.querySelectorAll('[data-amb]').forEach((sec) => {
-    const c = sec.querySelector('canvas.amb:not(.av)'), c2 = sec.querySelector('canvas.amb.av'), v = VIES[sec.dataset.amb];
-    if (c && c.getContext && v) scenes.push({ sec, c, x: c.getContext('2d'), c2, x2: c2 && c2.getContext ? c2.getContext('2d') : null, v, W: 0, H: 0, D: 0, E: null, vis: false });
+    const c = sec.querySelector('canvas.amb'), v = VIES[sec.dataset.amb];
+    if (c && c.getContext && v) scenes.push({ sec, c, x: c.getContext('2d'), v, W: 0, H: 0, D: 0, E: null, vis: false });
   });
   const mesure = (s) => {
     const W = s.c.clientWidth, H = s.c.clientHeight;
@@ -323,8 +322,7 @@
     if (W !== s.W || H !== s.H || D !== s.D || !s.E) {
       s.W = W; s.H = H; s.D = D; s.c.width = Math.round(W * D); s.c.height = Math.round(H * D);
       s.x.setTransform(D, 0, 0, D, 0, 0); s.E = s.v.init(W, H);
-      if (s.x2) { s.c2.width = s.c.width; s.c2.height = s.c.height; s.x2.setTransform(D, 0, 0, D, 0, 0); }
-      if (doux) s.v.dessin(s.x, s.E, 0, W, H, s.x2);
+      if (doux) s.v.dessin(s.x, s.E, 0, W, H);
     }
     return true;
   };
@@ -335,8 +333,7 @@
     for (const s of scenes) {
       if (!s.vis || !s.E) continue;
       encore = true;
-      s.x.clearRect(0, 0, s.W, s.H); if (s.x2) s.x2.clearRect(0, 0, s.W, s.H);
-      s.v.pas(s.E, dt, t, s.W, s.H); s.v.dessin(s.x, s.E, t, s.W, s.H, s.x2);
+      s.x.clearRect(0, 0, s.W, s.H); s.v.pas(s.E, dt, t, s.W, s.H); s.v.dessin(s.x, s.E, t, s.W, s.H);
     }
     if (encore && !document.hidden) requestAnimationFrame(boucle); else { tourne = false; avant = 0; }
   };
