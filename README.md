@@ -1,10 +1,13 @@
-# Site de Stelli · Les royaumes perdus
+# Site de Stelli · Les Royaumes perdus
 
-Ce petit site sert à trois choses :
+Ce site sert à quatre choses :
 
-- `index.html` : la politique de confidentialité du jeu, en 12 langues (c'est la page demandée par Apple, Google et AdMob).
+- **Le site du jeu**, dans les 21 langues du jeu : `index.html` (anglais, la page principale) et un dossier par langue (`fr/`, `es/`, `ja/`…), avec les images (`img/`), les polices (`fonts/`), `site.css` et `site.js`. Ces pages sont fabriquées automatiquement à partir des textes de la fiche App Store et du jeu : ne pas les modifier à la main.
+- `privacy/` : la politique de confidentialité du jeu, en 21 langues (c'est la page demandée par Apple, Google et AdMob).
 - `app-ads.txt` : la ligne demandée par AdMob pour les publicités.
 - `version.json` : le fichier que le jeu lit, quand le joueur est connecté, pour savoir s'il existe une nouvelle version.
+
+Pour Google : `sitemap.xml` (la liste des pages et de leurs langues) et `robots.txt`.
 
 ## Annoncer ou imposer une mise à jour (`version.json`)
 
