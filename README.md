@@ -1,5 +1,7 @@
 # Site de Stelli · Les Royaumes perdus
 
+Adresse : **https://stelligame.com** (nom de domaine chez OVHcloud, relié par le fichier `CNAME` ; l'ancienne adresse stelli07.github.io y renvoie).
+
 Ce site sert à quatre choses :
 
 - **Le site du jeu**, dans les 21 langues du jeu : `index.html` (anglais, la page principale) et un dossier par langue (`fr/`, `es/`, `ja/`…), avec les images (`img/`), les polices (`fonts/`), `site.css` et `site.js`. Ces pages sont fabriquées automatiquement à partir des textes de la fiche App Store et du jeu : ne pas les modifier à la main.

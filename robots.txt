@@ -1,4 +1,4 @@
 User-agent: *
 Allow: /
 
-Sitemap: https://stelli07.github.io/sitemap.xml
+Sitemap: https://stelligame.com/sitemap.xml
