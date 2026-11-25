@@ -1,3 +1,4 @@
+/*! Stelli — by Azdine */
 (() => {
   window.stelliOk = 1;
   const LANGUES = {"en": ["/", "English"], "fr": ["/fr/", "Français"], "es": ["/es/", "Español"], "it": ["/it/", "Italiano"], "pt-BR": ["/pt-br/", "Português (Brasil)"], "pt-PT": ["/pt-pt/", "Português (Portugal)"], "de": ["/de/", "Deutsch"], "ar": ["/ar/", "العربية"], "ja": ["/ja/", "日本語"], "ko": ["/ko/", "한국어"], "zh-Hant": ["/zh-hant/", "繁體中文"], "id": ["/id/", "Bahasa Indonesia"], "nl": ["/nl/", "Nederlands"], "pl": ["/pl/", "Polski"], "tr": ["/tr/", "Türkçe"], "ru": ["/ru/", "Русский"], "he": ["/he/", "עברית"], "hi": ["/hi/", "हिन्दी"], "th": ["/th/", "ไทย"], "vi": ["/vi/", "Tiếng Việt"], "ms": ["/ms/", "Bahasa Melayu"]};
