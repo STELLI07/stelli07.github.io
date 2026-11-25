@@ -296,14 +296,42 @@
     document.addEventListener('visibilitychange', () => { if (!document.hidden) lance(); });
   }
 
+  const pion = document.getElementById('pionnier');
+  if (pion) {
+    const v = /^(\d{4})-(\d{2})-(\d{2})$/.exec(pion.dataset.fin || '');
+    const fin = v ? new Date(+v[1], +v[2] - 1, +v[3]) : new Date(2027, 0, 1);
+    if (Date.now() >= fin.getTime()) pion.hidden = true;
+    else {
+      const ch = pion.querySelector('.pion-date');
+      if (ch && ch.dataset.t) {
+        const lg = document.documentElement.lang;
+        let d;
+        try { d = new Intl.DateTimeFormat(lg === 'ar' ? 'ar-u-nu-latn' : lg, { day: 'numeric', month: 'long', year: 'numeric' }).format(fin); } catch (e) { d = fin.toLocaleDateString(); }
+        const w = fin.getMonth() === 0 && fin.getDate() === 1 ? ch.dataset.wy.replace('{y}', fin.getFullYear()) : ch.dataset.wd.replace('{d}', d);
+        ch.querySelector('span').textContent = ch.dataset.t.replace('{w}', w);
+        ch.hidden = false;
+      }
+    }
+  }
+
   const c = document.getElementById('ciel');
   if (!c || !c.getContext) return;
   const x = c.getContext('2d');
-  let W = 0, H = 0, D = 1, points = [], filantes = [], vu = true, prec = 0, marche = false;
+  let W = 0, H = 0, D = 1, points = [], filantes = [], vu = true, prec = 0, marche = false, neige = [];
+  const noel = document.documentElement.classList.contains('noel');
+  const flocon = new Image();
+  if (noel) flocon.src = '/img/noel/flocon.png';
+  const flocons = () => {
+    neige = Array.from({ length: Math.round(W * H / 7000) }, (_, i) => {
+      const gros = i % 9 === 0;
+      return { x: Math.random() * W, y: Math.random() * H, r: gros ? al(9, 15) : al(1.2, 3.4), v: gros ? al(26, 40) : al(16, 46), b: al(8, 26), p: al(0, 6.3), a: al(0, 6.3), va: al(-0.6, 0.6), o: gros ? al(0.75, 0.95) : al(0.45, 0.9), gros };
+    });
+  };
   const taille = () => {
     D = Math.min(2, window.devicePixelRatio || 1); W = c.clientWidth; H = c.clientHeight;
     c.width = Math.round(W * D); c.height = Math.round(H * D); x.setTransform(D, 0, 0, D, 0, 0);
     points = Array.from({ length: Math.round(W * H / 8000) }, () => ({ x: Math.random() * W, y: Math.random() * H, r: Math.random() * 1.3 + 0.3, p: Math.random() * 6.3 }));
+    if (noel) flocons();
   };
   const etoile = (px, py, r, rot) => {
     x.save(); x.translate(px, py); x.rotate(rot); x.fillStyle = '#ffe28c'; x.shadowColor = '#ffd36b'; x.shadowBlur = 14;
@@ -319,6 +347,17 @@
       x.strokeStyle = g; x.lineWidth = s.r * 0.55; x.lineCap = 'round'; x.beginPath(); x.moveTo(s.x, s.y); x.lineTo(tx, ty); x.stroke();
       etoile(s.x, s.y, s.r, s.a);
     }
+    if (noel) {
+      x.fillStyle = '#ffffff';
+      for (const f of neige) {
+        const fx = f.x + Math.sin(t / 1000 * 0.8 + f.p) * f.b;
+        if (f.gros) {
+          if (!flocon.complete || !flocon.naturalWidth) continue;
+          x.save(); x.globalAlpha = f.o; x.translate(fx, f.y); x.rotate(f.a); x.drawImage(flocon, -f.r, -f.r * 0.88, f.r * 2, f.r * 1.76); x.restore();
+        } else { x.globalAlpha = f.o; x.beginPath(); x.arc(fx, f.y, f.r, 0, 6.283); x.fill(); }
+      }
+      x.globalAlpha = 1;
+    }
   };
   const tour = (t) => {
     if (!vu) { marche = false; return; }
@@ -328,6 +367,7 @@
       filantes.push({ x: Math.random() * W * 1.1 - W * 0.15, y: -24, vx: v * 0.38, vy: v, r: 5 + Math.random() * 6, a: Math.random() * 6, va: (Math.random() - 0.5) * 3 });
     }
     for (const s of filantes) { s.x += s.vx * dt; s.y += s.vy * dt; s.a += s.va * dt; }
+    for (const f of neige) { f.y += f.v * dt; f.a += f.va * dt; if (f.y > H + 20) { f.y = -20; f.x = Math.random() * W; } }
     filantes = filantes.filter((s) => s.y < H + 40);
     dessine(t);
     requestAnimationFrame(tour);
